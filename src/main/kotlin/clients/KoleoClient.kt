@@ -1,16 +1,19 @@
 package pl.wiktorlacki.clients
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.cache.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.request
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
+import okhttp3.Response
 import org.koin.core.component.KoinComponent
 import org.slf4j.LoggerFactory
 import pl.wiktorlacki.models.*
@@ -18,14 +21,26 @@ import pl.wiktorlacki.models.*
 class KoleoClient : KoinComponent {
 
     companion object {
-        private val BASE_URL = "https://api.koleo.pl/v2/main"
+        private const val BASE_URL = "https://api.koleo.pl/v2/main"
     }
 
-    private val client = HttpClient(CIO) {
+    private val client = HttpClient(OkHttp) {
+        engine {
+            addNetworkInterceptor(Interceptor { chain ->
+                val response: Response = chain.proceed(chain.request())
+
+                if (response.code == 304) { // koleo caching hack
+                    return@Interceptor response.newBuilder()
+                        .header("Vary", "Origin,Accept-Encoding")
+                        .build()
+                }
+                response
+            })
+        }
+
         install(HttpTimeout) {
-            requestTimeoutMillis = 60_000
-            connectTimeoutMillis = 60_000
-            socketTimeoutMillis = 60_000
+            connectTimeoutMillis = 30_000
+            requestTimeoutMillis = 30_000
         }
 
         install(ContentNegotiation) {
@@ -35,15 +50,23 @@ class KoleoClient : KoinComponent {
             })
         }
 
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.INFO
+        }
+
+        install(HttpCache)
+
         defaultRequest {
             header(HttpHeaders.UserAgent, "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0")
-            header(HttpHeaders.Accept, "application/json, text/plain, */*")
+            header(HttpHeaders.Accept, "application/json")
             header(HttpHeaders.AcceptLanguage, "pl")
             header("x-koleo-client", "Nuxt-90a70c2")
             header("x-koleo-version", "2")
             header("DNT", "1")
             header("Sec-GPC", "1")
             header("accept-eol-response-version", "2")
+
         }
     }
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -88,11 +111,11 @@ class KoleoClient : KoinComponent {
     private suspend inline fun <reified T> put(endpoint: String) = request<T>(HttpMethod.Put, endpoint)
 
     suspend fun findStationsByName(query: String): StationsResponse? {
-        return get("/livesearch", mapOf("q" to query))
+        return get("livesearch", mapOf("q" to query))
     }
 
     suspend fun findStationNameById(id: String): StationDetails? {
-        return get("/stations/by_id/${id}")
+        return get("stations/by_id/${id}")
     }
 
     suspend fun findConnections(departureStationId: Int, arrivalStationId: Int, date: String): List<Connection>? {
