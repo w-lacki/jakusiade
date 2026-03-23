@@ -2,9 +2,23 @@ flatpickr("#searchDate", {
     enableTime: true,
     time_24hr: true,
     minuteIncrement: 1,
+    defaultDate: new Date(),
     altInput: true,
     altFormat: "d.m.Y H:i",
     dateFormat: "Y-m-d\\TH:i:00"
+});
+
+let currentStartId = null;
+let currentEndId = null;
+let firstConnectionTime = null;
+let lastConnectionTime = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('startStationName').value = '';
+    currentStartId = null;
+
+    document.getElementById('endStationName').value = '';
+    currentEndId = null;
 });
 
 function debounce(func, delay) {
@@ -15,9 +29,8 @@ function debounce(func, delay) {
     };
 }
 
-function setupAutocomplete(nameInputId, idInputId, suggestionsId) {
+function setupAutocomplete(nameInputId, suggestionsId) {
     const nameInput = document.getElementById(nameInputId);
-    const idInput = document.getElementById(idInputId);
     const suggestionsList = document.getElementById(suggestionsId);
 
     const fetchStations = async (query) => {
@@ -36,7 +49,10 @@ function setupAutocomplete(nameInputId, idInputId, suggestionsId) {
                     li.textContent = station.name;
                     li.onclick = () => {
                         nameInput.value = station.name;
-                        idInput.value = station.id;
+
+                        if (nameInputId === 'startStationName') currentStartId = station.id;
+                        if (nameInputId === 'endStationName') currentEndId = station.id;
+
                         suggestionsList.style.display = 'none';
                     };
                     suggestionsList.appendChild(li);
@@ -50,7 +66,12 @@ function setupAutocomplete(nameInputId, idInputId, suggestionsId) {
         }
     };
 
-    nameInput.addEventListener('input', debounce((e) => fetchStations(e.target.value), 300));
+    nameInput.addEventListener('input', debounce((e) => {
+        if (nameInputId === 'startStationName') currentStartId = null;
+        if (nameInputId === 'endStationName') currentEndId = null;
+
+        fetchStations(e.target.value);
+    }, 300));
 
     document.addEventListener('click', (e) => {
         if (e.target !== nameInput && e.target !== suggestionsList) {
@@ -59,22 +80,62 @@ function setupAutocomplete(nameInputId, idInputId, suggestionsId) {
     });
 }
 
-setupAutocomplete('startStationName', 'startStationId', 'startStationSuggestions');
-setupAutocomplete('endStationName', 'endStationId', 'endStationSuggestions');
+setupAutocomplete('startStationName', 'startStationSuggestions');
+setupAutocomplete('endStationName', 'endStationSuggestions');
 
-document.getElementById('searchBtn').addEventListener('click', async () => {
-    const startId = document.getElementById('startStationId').value;
-    const endId = document.getElementById('endStationId').value;
-    let dateVal = document.getElementById('searchDate').value;
-    console.log(dateVal)
-    const resultsContainer = document.getElementById('resultsContainer');
 
-    if (!startId || !endId || !dateVal) {
-        alert("Proszę wybrać prawidłową stację początkową, docelową oraz datę.");
+document.getElementById('searchBtn').addEventListener('click', () => {
+    const startName = document.getElementById('startStationName').value.trim();
+    const endName = document.getElementById('endStationName').value.trim();
+    const dateVal = document.getElementById('searchDate').value;
+
+    if (!currentStartId || !currentEndId || !dateVal || startName === '' || endName === '') {
+        alert("Proszę wybrać prawidłową stację początkową, docelową oraz datę z podpowiedzi.");
         return;
     }
 
+    fetchConnections(currentStartId, currentEndId, dateVal);
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (!firstConnectionTime) return;
+
+    let hoursToSubtract = 3;
+    if (firstConnectionTime.getHours() < 4) {
+        hoursToSubtract = 8;
+    }
+
+    const prevTime = new Date(firstConnectionTime.getTime() - (hoursToSubtract * 60 * 60 * 1000));
+    const dateStr = formatToApiDate(prevTime);
+
+    document.getElementById('searchDate')._flatpickr.setDate(prevTime);
+
+    fetchConnections(currentStartId, currentEndId, dateStr);
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    if (!lastConnectionTime) return;
+
+    const nextTime = new Date(lastConnectionTime.getTime() + (60 * 1000));
+    const dateStr = formatToApiDate(nextTime);
+
+    document.getElementById('searchDate')._flatpickr.setDate(nextTime);
+
+    fetchConnections(currentStartId, currentEndId, dateStr);
+});
+
+function formatToApiDate(date) {
+    const pad = num => num.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+}
+
+async function fetchConnections(startId, endId, dateVal) {
+    console.log(startId, endId, dateVal);
+    const resultsContainer = document.getElementById('resultsContainer');
+    const paginationContainer = document.getElementById('paginationContainer');
+
     resultsContainer.innerHTML = '<em>Wyszukiwanie...</em>';
+    paginationContainer.style.display = 'none';
 
     try {
         const url = `/search/connection?start=${startId}&end=${endId}&date=${encodeURIComponent(dateVal)}`;
@@ -85,11 +146,19 @@ document.getElementById('searchBtn').addEventListener('click', async () => {
         }
 
         const connections = await response.json();
+
+        if (connections.length > 0) {
+            firstConnectionTime = new Date(connections[0].departure);
+            lastConnectionTime = new Date(connections[connections.length - 1].departure);
+            paginationContainer.style.display = 'flex';
+        }
+
         renderResults(connections);
+
     } catch (error) {
         resultsContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
     }
-});
+}
 
 function renderResults(connections) {
     const container = document.getElementById('resultsContainer');
@@ -101,9 +170,21 @@ function renderResults(connections) {
     }
 
     connections.forEach(conn => {
-        const depTime = new Date(conn.departure).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', hour12: false });
-        const arrTime = new Date(conn.arrival).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', hour12: false });
-        const dateStr = new Date(conn.departure).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const depTime = new Date(conn.departure).toLocaleTimeString('pl-PL', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        const arrTime = new Date(conn.arrival).toLocaleTimeString('pl-PL', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        const dateStr = new Date(conn.departure).toLocaleDateString('pl-PL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
         const connId = conn.uuid;
 
         let html = `
@@ -126,8 +207,16 @@ function renderResults(connections) {
 
         conn.legs.forEach(leg => {
             if (leg.leg_type === "train_leg") {
-                const legDep = new Date(leg.departure).toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit', hour12: false});
-                const legArr = new Date(leg.arrival).toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit', hour12: false});
+                const legDep = new Date(leg.departure).toLocaleTimeString('pl-PL', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const legArr = new Date(leg.arrival).toLocaleTimeString('pl-PL', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
                 html += `
                     <div class="train-leg">
                         <strong>${leg.train_full_name || leg.train_name}</strong><br>

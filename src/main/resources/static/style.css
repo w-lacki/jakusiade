@@ -1,3 +1,14 @@
+@media (max-width: 650px) {
+    .search-layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pagination-buttons {
+        flex-direction: row;
+    }
+}
+
 :root {
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
@@ -47,7 +58,6 @@ body {
     color: var(--text-muted);
 }
 
-/* Form Styles */
 .search-form {
     display: flex;
     flex-direction: column;
@@ -101,6 +111,9 @@ button {
     transition: background-color 0.2s ease, transform 0.1s ease;
     width: 100%;
     margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 button:hover {
@@ -111,7 +124,6 @@ button:active {
     transform: translateY(1px);
 }
 
-/* Autocomplete */
 .suggestions {
     position: absolute;
     top: calc(100% + 5px);
@@ -292,4 +304,42 @@ button:active {
 .seat-item:last-child {
     border-bottom: none;
     padding-bottom: 0;
+}
+
+.search-layout {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+.search-form {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.search-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 28px;
+}
+
+.search-actions #searchBtn {
+    margin-top: 0;
+    height: 44px;
+}
+
+.pagination-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 0;
+}
+
+.pagination-buttons button {
+    margin-top: 0;
+    width: 100%;
 }

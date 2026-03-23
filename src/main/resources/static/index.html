@@ -19,27 +19,34 @@
         <h2>Jakusiądę</h2>
     </div>
 
-    <div class="search-form">
-        <div class="form-group">
-            <label for="startStationName">Stacja początkowa</label>
-            <input type="text" id="startStationName" placeholder="Np. Warszawa Centralna" autocomplete="off">
-            <input type="hidden" id="startStationId">
-            <ul id="startStationSuggestions" class="suggestions" style="display: none;"></ul>
+    <div class="search-layout">
+        <div class="search-form">
+            <div class="form-group">
+                <label for="startStationName">Stacja początkowa</label>
+                <input type="text" id="startStationName" placeholder="Np. Warszawa Centralna" autocomplete="off">
+                <ul id="startStationSuggestions" class="suggestions" style="display: none;"></ul>
+            </div>
+
+            <div class="form-group">
+                <label for="endStationName">Stacja docelowa</label>
+                <input type="text" id="endStationName" placeholder="Np. Gdańsk Główny" autocomplete="off">
+                <ul id="endStationSuggestions" class="suggestions" style="display: none;"></ul>
+            </div>
+
+            <div class="form-group">
+                <label for="searchDate">Data i godzina odjazdu</label>
+                <input type="text" id="searchDate" placeholder="Wybierz datę i godzinę">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="endStationName">Stacja docelowa</label>
-            <input type="text" id="endStationName" placeholder="Np. Gdańsk Główny" autocomplete="off">
-            <input type="hidden" id="endStationId">
-            <ul id="endStationSuggestions" class="suggestions" style="display: none;"></ul>
-        </div>
+        <div class="search-actions">
+            <button id="searchBtn">Szukaj połączeń</button>
 
-        <div class="form-group">
-            <label for="searchDate">Data i godzina odjazdu</label>
-            <input type="text" id="searchDate" placeholder="Wybierz datę i godzinę">
+            <div class="pagination-buttons" id="paginationContainer" style="display: none;">
+                <button id="prevBtn" class="btn-outline">&larr; Wcześniejsze</button>
+                <button id="nextBtn" class="btn-outline">Późniejsze &rarr;</button>
+            </div>
         </div>
-
-        <button id="searchBtn">Szukaj połączeń</button>
     </div>
 
     <div id="resultsContainer"></div>
