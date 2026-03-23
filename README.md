@@ -1,4 +1,5 @@
 # jakusiade
+![jakusiade](https://github.com/user-attachments/assets/722a53b2-5df4-4965-a45b-8eb11d89f61c)
 
 Jakusiade is a web application that helps travelers find train connections and the best available seats.
 
