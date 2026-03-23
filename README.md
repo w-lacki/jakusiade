@@ -1,42 +1,36 @@
 # jakusiade
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+Jakusiade is a web application that helps travelers find train connections and the best available seats.
 
-Here are some useful links to get you started:
-
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+The main idea behind this project is to solve a common problem: when a seat is not available for your entire trip (from the start to the end station), you usually have to buy a ticket without a seat guarantee and stand for the whole journey.\
+This app checks the route stop-by-stop and finds an empty seat for the longest possible part of your journey, maximizing the duration you are able to sit.
 
 ## Features
 
-Here's a list of features included in this project:
+* **Station and Route Search:** Find stations and train connections using data from the Koleo API.
+* **Pagination:** Easily browse earlier or later train connections.
+* **Smart Seat Finder:** The app checks seat availability for every single part of the route, not just the full trip.
 
-| Name                                                                   | Description                                                                        |
-| ------------------------------------------------------------------------|------------------------------------------------------------------------------------ |
-| [Koin](https://start.ktor.io/p/koin)                                   | Provides dependency injection                                                      |
-| [Content Negotiation](https://start.ktor.io/p/content-negotiation)     | Provides automatic content conversion according to Content-Type and Accept headers |
-| [Routing](https://start.ktor.io/p/routing)                             | Provides a structured routing DSL                                                  |
-| [kotlinx.serialization](https://start.ktor.io/p/kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library                     |
+## Tech Stack
 
-## Building & Running
+* **Backend:** Kotlin, Ktor (Server & Client), Koin (Dependency Injection), and `kotlinx.serialization` for JSON parsing.
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript, and Flatpickr for date selection.
+* **External APIs:** Integrates with the Koleo API (v2) to get up-to-date station, connection, and real-time seat data.
 
-To build or run the project, use one of the following tasks:
+## How the Seat Algorithm Works
 
-| Task                                    | Description                                                          |
-| -----------------------------------------|---------------------------------------------------------------------- |
-| `./gradlew test`                        | Run the tests                                                        |
-| `./gradlew build`                       | Build everything                                                     |
-| `./gradlew buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `./gradlew buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `./gradlew publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `./gradlew run`                         | Run the server                                                       |
-| `./gradlew runDocker`                   | Run using the local docker image                                     |
+1. If a seat is not available for the whole trip, the app divides the route into smaller segments (between every single stop).
+2. It asks the API for available seats on each small segment.
+3. The scoring engine tracks these segments for each seat. It calculates the total continuous time a passenger can sit in a specific seat.
+4. It sorts the results and returns the best options, showing exactly which stops the seat is valid for.
 
-If the server starts successfully, you'll see the following output:
+## Getting Started
 
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
-```
+### Prerequisites
+* JDK 21+
+* Gradle
 
+### Running Locally
+1. Clone the repository.
+2. Run the Ktor backend application using your IDE or Gradle (`./gradlew run`).
+3. Open your web browser and go to `http://localhost:8080`.
