@@ -6,6 +6,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.slf4j.LoggerFactory
 import pl.wiktorlacki.clients.KoleoClient
 import pl.wiktorlacki.models.*
 import java.time.OffsetDateTime
@@ -13,9 +14,10 @@ import java.time.OffsetDateTime
 class SeatService : KoinComponent {
     private val client by inject<KoleoClient>()
     private val scoringEngine: SeatScoringEngine by inject<SeatScoringEngine>()
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val BLACKLISTED_BRAND_IDS = setOf(
-        3 // Polregio no reservation
+        3 // Polregio - no reservation
     )
 
     suspend fun findBestSeat(connectionId: String): SeatSearchResult {
@@ -98,7 +100,7 @@ class SeatService : KoinComponent {
                 seatAvailability[it] = allSegments
             }
 
-            println("Direct availability found for train $trainNr on route ${firstStation.stationId} -> ${lastStation.stationId}, skipping segment checks.")
+            logger.info("Direct availability found for train $trainNr on route ${firstStation.stationId} -> ${lastStation.stationId}, skipping segment checks.")
             return seatAvailability
         }
 
