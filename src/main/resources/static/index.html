@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jakusiade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h2>Jakusiądę</h2>
+    </div>
+
+    <div class="search-form">
+        <div class="form-group">
+            <label for="startStationName">Stacja początkowa</label>
+            <input type="text" id="startStationName" placeholder="Np. Warszawa Centralna" autocomplete="off">
+            <input type="hidden" id="startStationId">
+            <ul id="startStationSuggestions" class="suggestions" style="display: none;"></ul>
+        </div>
+
+        <div class="form-group">
+            <label for="endStationName">Stacja docelowa</label>
+            <input type="text" id="endStationName" placeholder="Np. Gdańsk Główny" autocomplete="off">
+            <input type="hidden" id="endStationId">
+            <ul id="endStationSuggestions" class="suggestions" style="display: none;"></ul>
+        </div>
+
+        <div class="form-group">
+            <label for="searchDate">Data i godzina odjazdu</label>
+            <input type="text" id="searchDate" placeholder="Wybierz datę i godzinę">
+        </div>
+
+        <button id="searchBtn">Szukaj połączeń</button>
+    </div>
+
+    <div id="resultsContainer"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="script.js"></script>
+</body>
+</html>
